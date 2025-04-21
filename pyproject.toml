@@ -1,0 +1,33 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "opensearch-toolkits"
+version = "0.1.0"
+description = "Modern toolkits for OpenSearch"
+authors = [
+    {name = "DongWook Kim", email = "kdw4521@gmail.com"},
+]
+readme = "README.md"
+requires-python = ">=3.10"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+]
+dependencies = [
+    "python-dotenv",
+    "datasets",
+    "opensearch-py",
+    "opensearch-py[async]",
+    "uuid7",
+    "langchain",
+    "langgraph",
+    "langsmith",
+    "langchain-openai",
+    "langchain-community"
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/opensearch_toolkits"]
