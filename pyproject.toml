@@ -17,16 +17,20 @@ classifiers = [
     "Operating System :: OS Independent",
 ]
 dependencies = [
+    "omegaconf",
     "python-dotenv",
     "datasets",
     "opensearch-py",
     "opensearch-py[async]",
     "uuid7",
+    "orjson",
+    "transformers",
     "langchain",
     "langgraph",
     "langsmith",
     "langchain-openai",
-    "langchain-community"
+    "langchain-community",
+    "ipywidgets"
 ]
 
 [tool.hatch.build.targets.wheel]

@@ -1,0 +1,13 @@
+## embedding
+model_name: 
+  tokenizer: nlpai-lab/KURE-v1
+  api: kure-v1
+dataset_name: KorQuAD/squad_kor_v1
+default: squad_kor_v1
+split: train
+cache_dir: /Users/dongwook/workspace/data/cache_embeddings
+
+## indexing
+index_name: korquad_v1
+mapping_file: sample_mapping.json
+# preprocessor_name: korquad_v1

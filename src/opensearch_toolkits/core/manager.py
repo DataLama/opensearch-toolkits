@@ -6,6 +6,46 @@ from pydantic import BaseModel, Field, model_validator
 from abc import ABC, abstractmethod
 from .client import create_opensearch_client, create_async_opensearch_client, OpenSearchConfig
 
+def extract_dict_keys(dictionary, prefix='', result=None):
+    """일반 중첩 딕셔너리에서 키를 추출하는 함수"""
+    if result is None:
+        result = []
+    
+    for key, value in dictionary.items():
+        path = f"{prefix}.{key}" if prefix else key
+        result.append(path)
+        
+        if isinstance(value, dict):
+            extract_dict_keys(value, path, result)
+    
+    return result
+
+def extract_opensearch_mapping_keys(mapping, prefix='', result=None):
+    """Opensearch 매핑에서 키를 추출하는 함수"""
+    if result is None:
+        result = []
+    
+    # properties 키가 있는 경우 처리
+    if 'properties' in mapping:
+        properties = mapping['properties']
+        for field_name, field_def in properties.items():
+            field_path = f"{prefix}.{field_name}" if prefix else field_name
+            result.append(field_path)
+            
+            # 중첩 필드 처리
+            if 'properties' in field_def:
+                extract_opensearch_mapping_keys(field_def, field_path, result)
+    else:
+        # 일반 중첩 딕셔너리처럼 처리
+        for key, value in mapping.items():
+            if key != 'type' and key != 'format' and isinstance(value, dict):
+                path = f"{prefix}.{key}" if prefix else key
+                if key != 'properties':  # properties 키는 경로에 포함하지 않음
+                    result.append(path)
+                extract_opensearch_mapping_keys(value, path if key != 'properties' else prefix, result)
+    
+    return result
+
 
 class BaseOpenSearchManager(ABC):
     """Base abstract class for managing OpenSearch connections and operations."""
@@ -185,6 +225,27 @@ class SyncOpenSearchManager(BaseOpenSearchManager):
             except:
                 pass
             return False
+    
+    def compare_structures(self, dict_structure, mapping_structure):
+        """두 구조의 키를 비교하는 함수"""
+        dict_keys = set(extract_dict_keys(dict_structure))
+        mapping_keys = set(extract_opensearch_mapping_keys(mapping_structure))
+        dict_keys = set([key for key in dict_keys if key not in {'_id', "_index", "_source"}])
+        
+        # 두 구조에 공통적으로 존재하는 키
+        common_keys = dict_keys.intersection(mapping_keys)
+        
+        # 딕셔너리에는 있지만 매핑에는 없는 키
+        only_in_dict = dict_keys - mapping_keys
+        
+        # 매핑에는 있지만 딕셔너리에는 없는 키
+        only_in_mapping = mapping_keys - dict_keys
+        
+        return {
+            'common_keys': sorted(list(common_keys)),
+            'only_in_dict': sorted(list(only_in_dict)),
+            'only_in_mapping': sorted(list(only_in_mapping))
+        }
 
 
 class AsyncOpenSearchManager(BaseOpenSearchManager):
@@ -406,3 +467,24 @@ class AsyncOpenSearchManager(BaseOpenSearchManager):
             except:
                 pass
             return False
+    
+    async def compare_structures(self, dict_structure, mapping_structure):
+        """두 구조의 키를 비교하는 함수 (async)"""
+        dict_keys = set(extract_dict_keys(dict_structure))
+        mapping_keys = set(extract_opensearch_mapping_keys(mapping_structure))
+        dict_keys = set([key for key in dict_keys if key not in {'_id', "_index", "_source"}])
+        
+        # 두 구조에 공통적으로 존재하는 키
+        common_keys = dict_keys.intersection(mapping_keys)
+        
+        # 딕셔너리에는 있지만 매핑에는 없는 키
+        only_in_dict = dict_keys - mapping_keys
+        
+        # 매핑에는 있지만 딕셔너리에는 없는 키
+        only_in_mapping = mapping_keys - dict_keys
+        
+        return {
+            'common_keys': sorted(list(common_keys)),
+            'only_in_dict': sorted(list(only_in_dict)),
+            'only_in_mapping': sorted(list(only_in_mapping))
+        }

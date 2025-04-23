@@ -1,0 +1,121 @@
+{
+    "mappings": {
+      "properties": {
+        "metadata": {
+          "properties": {
+            "title": {
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword",
+                  "ignore_above": 256
+                },
+                "korean": {
+                  "type": "text",
+                  "analyzer": "korean_analyzer"
+                }
+              }
+            }
+          }
+        },
+        "text": {
+          "type": "text",
+          "analyzer": "multilingual_analyzer",
+          "search_analyzer": "multilingual_analyzer",
+          "index_options": "offsets",
+          "fields": {
+            "keyword": {
+              "type": "keyword",
+              "ignore_above": 2048
+            },
+            "english": {
+              "type": "text",
+              "analyzer": "english"
+            },
+            "korean": {
+              "type": "text",
+              "analyzer": "korean_analyzer"
+            },
+            "ngram": {
+              "type": "text",
+              "analyzer": "ngram_analyzer",
+              "search_analyzer": "standard"
+            }
+          }
+        },
+        "vector_field": {
+          "type": "knn_vector",
+          "dimension": 1024,
+          "space_type": "cosinesimil",
+          "method": {
+            "name": "hnsw",
+            "engine": "faiss",
+            "parameters": {
+              "ef_construction": 512,
+              "m": 32
+            }
+          }
+        },
+        "type": {
+          "type": "keyword"
+        }
+      },
+      "dynamic": "strict"
+    },
+    "settings": {
+      "index": {
+        "knn": true,
+        "knn.algo_param.ef_search": 100,
+        "analysis": {
+          "analyzer": {
+            "multilingual_analyzer": {
+              "type": "custom",
+              "tokenizer": "standard",
+              "filter": [
+                "lowercase",
+                "asciifolding",
+                "multilingual_stopwords"
+              ]
+            },
+            "korean_analyzer": {
+              "type": "custom",
+              "tokenizer": "nori_tokenizer",
+              "filter": [
+                "nori_posfilter",
+                "nori_readingform",
+                "lowercase"
+              ]
+            },
+            "ngram_analyzer": {
+              "type": "custom",
+              "tokenizer": "standard",
+              "filter": [
+                "lowercase",
+                "asciifolding",
+                "ngram_filter"
+              ]
+            }
+          },
+          "filter": {
+            "multilingual_stopwords": {
+              "type": "stop",
+              "stopwords": "_english_,_korean_"
+            },
+            "nori_posfilter": {
+              "type": "nori_part_of_speech",
+              "stoptags": [
+                "E", "IC", "J", "MAG", "MAJ", "MM", "SP", "SSC", "SSO", "SC", "SE"
+              ]
+            },
+            "ngram_filter": {
+              "type": "ngram",
+              "min_gram": 2,
+              "max_gram": 4
+            }
+          }
+        },
+        "max_ngram_diff": 50,
+        "highlight.max_analyzed_offset": 10000000
+      }
+    }
+  }
